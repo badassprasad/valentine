@@ -700,6 +700,106 @@
     </div>
 
     <script>
+        // ---- Sound Effects (Web Audio API) ----
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (this.ctx) return;
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            _osc(type, freq, duration, vol = 0.15, delay = 0) {
+                if (!this.ctx) return;
+                const o = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                o.type = type;
+                o.frequency.value = freq;
+                g.gain.setValueAtTime(0, this.ctx.currentTime + delay);
+                g.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + delay + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+                o.connect(g);
+                g.connect(this.ctx.destination);
+                o.start(this.ctx.currentTime + delay);
+                o.stop(this.ctx.currentTime + delay + duration);
+            }
+            pop() {
+                this._osc('sine', 600, 0.08, 0.12);
+                this._osc('sine', 900, 0.06, 0.06, 0.02);
+            }
+            ding() {
+                this._osc('sine', 880, 0.15, 0.14);
+                this._osc('sine', 1320, 0.12, 0.08, 0.05);
+            }
+            whoosh() {
+                if (!this.ctx) return;
+                const o = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                o.type = 'sine';
+                o.frequency.setValueAtTime(200, this.ctx.currentTime);
+                o.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.15);
+                o.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.3);
+                g.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+                o.connect(g);
+                g.connect(this.ctx.destination);
+                o.start();
+                o.stop(this.ctx.currentTime + 0.3);
+            }
+            blip() {
+                this._osc('square', 520, 0.06, 0.06);
+                this._osc('sine', 780, 0.08, 0.04, 0.02);
+            }
+            glitch() {
+                if (!this.ctx) return;
+                // Crunchy noise burst
+                const bufSize = this.ctx.sampleRate * 0.25;
+                const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+                const data = buf.getChannelData(0);
+                for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buf;
+                const g = this.ctx.createGain();
+                g.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
+                noise.connect(g);
+                g.connect(this.ctx.destination);
+                noise.start();
+                noise.stop(this.ctx.currentTime + 0.25);
+                // Alarm beep
+                this._osc('square', 440, 0.12, 0.12, 0.08);
+                this._osc('square', 330, 0.12, 0.1, 0.2);
+            }
+            beep(pitch = 0) {
+                // Ascending beep for loading bars
+                const freq = 500 + pitch * 120;
+                this._osc('sine', freq, 0.1, 0.1);
+                this._osc('triangle', freq * 1.5, 0.08, 0.04, 0.02);
+            }
+            chime() {
+                // Warm rising sparkle for valentine reveal
+                const notes = [523, 659, 784, 1047];
+                notes.forEach((f, i) => {
+                    this._osc('sine', f, 0.4, 0.1, i * 0.12);
+                    this._osc('triangle', f * 2, 0.3, 0.03, i * 0.12);
+                });
+            }
+            celebrate() {
+                // Triumphant fanfare chord
+                const chord = [523, 659, 784, 1047, 1319];
+                chord.forEach((f, i) => {
+                    this._osc('sine', f, 0.8, 0.08, i * 0.05);
+                    this._osc('triangle', f, 0.6, 0.04, i * 0.05 + 0.1);
+                });
+                // Sparkle cascade
+                for (let i = 0; i < 8; i++) {
+                    const f = 1200 + Math.random() * 1800;
+                    this._osc('sine', f, 0.15, 0.04, 0.5 + i * 0.15);
+                }
+            }
+        }
+        const sfx = new SoundFX();
+
         // ---- Ambient sparkles ----
         (function createSparkles() {
             const bg = document.getElementById('sparkleBg');
@@ -718,6 +818,9 @@
         let currentScreen = 0;
 
         function goTo(n) {
+            sfx.init();
+            if (n === 8) sfx.chime();
+            else sfx.whoosh();
             document.getElementById('screen' + currentScreen).classList.remove('active');
             document.getElementById('screen' + n).classList.add('active');
             currentScreen = n;
@@ -726,6 +829,7 @@
 
         // ---- Quiz answers ----
         function answer(btn, questionNum, response, isCorrect) {
+            sfx.ding();
             btn.classList.add('selected');
             const siblings = btn.parentElement.querySelectorAll('.option-btn');
             siblings.forEach(b => { b.style.pointerEvents = 'none'; });
@@ -734,6 +838,7 @@
             toast.className = 'response-toast';
             toast.textContent = response;
             document.body.appendChild(toast);
+            setTimeout(() => sfx.blip(), 100);
 
             setTimeout(() => {
                 toast.classList.add('toast-exit');
@@ -791,6 +896,7 @@
 
             overlay.classList.add('active');
             scanlines.classList.add('active');
+            sfx.glitch();
 
             // Screen shake on body
             document.body.style.animation = 'none';
@@ -820,6 +926,7 @@
 
         // ---- Swipe right ----
         function swipedRight() {
+            sfx.ding();
             goTo(7);
         }
 
@@ -831,11 +938,13 @@
                 { bar: 'bar3', result: 'result3', delay: 3800 },
                 { bar: 'bar4', result: 'result4', delay: 5600 },
             ];
-            bars.forEach(({ bar, result, delay }) => {
+            bars.forEach(({ bar, result, delay }, i) => {
                 setTimeout(() => {
                     document.getElementById(bar).style.width = '100%';
+                    sfx.beep(i);
                     setTimeout(() => {
                         document.getElementById(result).classList.add('visible');
+                        sfx.pop();
                     }, 1400);
                 }, delay);
             });
@@ -844,6 +953,7 @@
 
         // ---- Accepted! ----
         function accepted() {
+            sfx.celebrate();
             goTo(9);
             startCelebration();
         }
