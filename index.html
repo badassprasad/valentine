@@ -126,9 +126,14 @@
             background: linear-gradient(135deg, #FFC629, #FF9500);
             color: #1a1a2e;
         }
-        .btn-primary:hover, .btn-primary:active {
-            transform: scale(1.06);
-            box-shadow: 0 6px 28px rgba(255, 198, 41, 0.45);
+        @media (hover: hover) {
+            .btn-primary:hover {
+                transform: scale(1.06);
+                box-shadow: 0 6px 28px rgba(255, 198, 41, 0.45);
+            }
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
         }
 
         /* ---- Quiz Card ---- */
@@ -171,10 +176,16 @@
             text-align: left;
             -webkit-appearance: none;
         }
-        .option-btn:hover, .option-btn:active {
+        @media (hover: hover) {
+            .option-btn:hover {
+                background: rgba(255, 198, 41, 0.18);
+                border-color: rgba(255, 198, 41, 0.5);
+                transform: translateX(4px);
+            }
+        }
+        .option-btn:active {
             background: rgba(255, 198, 41, 0.18);
             border-color: rgba(255, 198, 41, 0.5);
-            transform: translateX(4px);
         }
         .option-btn.selected {
             background: rgba(255,198,41,0.25);
@@ -233,9 +244,14 @@
             transition: all 0.3s ease;
             -webkit-appearance: none;
         }
-        .yes-btn:hover, .yes-btn:active {
-            transform: scale(1.06);
-            box-shadow: 0 6px 28px rgba(255,198,41,0.45);
+        @media (hover: hover) {
+            .yes-btn:hover {
+                transform: scale(1.06);
+                box-shadow: 0 6px 28px rgba(255,198,41,0.45);
+            }
+        }
+        .yes-btn:active {
+            transform: scale(0.97);
         }
         .no-btn {
             padding: 15px 44px;
