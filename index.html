@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>⚠️ Important Notification</title>
+    <meta name="description" content="You have a pending notification. Please review.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ---- Ambient sparkle particles ---- */
+        .sparkle-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            overflow: hidden;
+        }
+        .sparkle {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: rgba(255, 198, 41, 0.5);
+            border-radius: 50%;
+            animation: twinkle linear infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        /* ---- Screens ---- */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 440px;
+            z-index: 1;
+        }
+        .screen.active {
+            display: flex;
+            animation: screenIn 0.5s cubic-bezier(.4,0,.2,1);
+        }
+        @keyframes screenIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ---- Bumble Logo ---- */
+        .bumble-logo {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, #FFC629, #FF9500);
+            border-radius: 22px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 42px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 32px rgba(255, 198, 41, 0.3);
+            animation: logoPulse 2s ease infinite;
+        }
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(255,198,41,0.3); }
+            50% { box-shadow: 0 8px 48px rgba(255,198,41,0.5); }
+        }
+
+        /* ---- Notification Card ---- */
+        .notification-badge {
+            background: rgba(255, 198, 41, 0.08);
+            border: 1px solid rgba(255, 198, 41, 0.2);
+            border-radius: 20px;
+            padding: 1.8rem;
+            margin: 1rem 0;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .notification-badge h2 {
+            color: #FFC629;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+        }
+        .notification-badge p {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.85);
+        }
+        .highlight {
+            color: #FFC629;
+            font-weight: 800;
+        }
+
+        /* ---- Buttons ---- */
+        .btn {
+            padding: 15px 44px;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(.4,0,.2,1);
+            margin-top: 1.5rem;
+            -webkit-appearance: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #FFC629, #FF9500);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover, .btn-primary:active {
+            transform: scale(1.06);
+            box-shadow: 0 6px 28px rgba(255, 198, 41, 0.45);
+        }
+
+        /* ---- Quiz Card ---- */
+        .quiz-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 2rem 1.5rem;
+            width: 100%;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .question-number {
+            font-size: 0.8rem;
+            color: #FFC629;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.6rem;
+        }
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 15px 18px;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 14px;
+            color: white;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: left;
+            -webkit-appearance: none;
+        }
+        .option-btn:hover, .option-btn:active {
+            background: rgba(255, 198, 41, 0.18);
+            border-color: rgba(255, 198, 41, 0.5);
+            transform: translateX(4px);
+        }
+        .option-btn.selected {
+            background: rgba(255,198,41,0.25);
+            border-color: #FFC629;
+            pointer-events: none;
+        }
+
+        /* ---- Response Toast ---- */
+        .response-toast {
+            position: fixed;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10,10,30,0.92);
+            border-radius: 18px;
+            padding: 1.2rem 1.8rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,198,41,0.25);
+            max-width: 88%;
+            text-align: center;
+            animation: toastIn 0.35s cubic-bezier(.4,0,.2,1);
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-18px) scale(0.95); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        }
+        .toast-exit {
+            animation: toastOut 0.35s cubic-bezier(.4,0,.2,1) forwards;
+        }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.95); }
+        }
+
+        /* ---- Swipe Buttons ---- */
+        .swipe-area {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 1.2rem;
+            min-height: 60px;
+            position: relative;
+        }
+        .yes-btn {
+            padding: 15px 44px;
+            background: linear-gradient(135deg, #FFC629, #FF9500);
+            border: none;
+            border-radius: 50px;
+            color: #1a1a2e;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+        }
+        .yes-btn:hover, .yes-btn:active {
+            transform: scale(1.06);
+            box-shadow: 0 6px 28px rgba(255,198,41,0.45);
+        }
+        .no-btn {
+            padding: 15px 44px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            color: rgba(255,255,255,0.7);
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: absolute;
+            -webkit-appearance: none;
+        }
+        .no-btn.shrinking {
+            font-size: 0.7rem;
+            padding: 8px 20px;
+        }
+        .no-btn.tiny {
+            font-size: 0.5rem;
+            padding: 4px 12px;
+            opacity: 0.5;
+        }
+        #noAttempts {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            min-height: 1.2em;
+        }
+
+        /* ---- Loading Screen ---- */
+        .loading-item {
+            width: 100%;
+            margin-bottom: 1.4rem;
+            text-align: left;
+        }
+        .loading-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: rgba(255,255,255,0.75);
+        }
+        .loading-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFC629, #FF6B6B);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 1.4s cubic-bezier(.4,0,.2,1);
+        }
+        .loading-result {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #FFC629;
+            margin-top: 0.3rem;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            transform: translateY(0);
+        }
+        .loading-result.visible {
+            opacity: 1;
+        }
+
+        /* ---- Valentine Card ---- */
+        .valentine-card {
+            background: linear-gradient(135deg, rgba(255,75,110,0.15), rgba(255,107,107,0.1));
+            border: 1px solid rgba(255,75,110,0.25);
+            border-radius: 28px;
+            padding: 2.5rem 1.8rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: valentineGlow 2s ease infinite;
+        }
+        @keyframes valentineGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(255,75,110,0.15); }
+            50% { box-shadow: 0 0 50px rgba(255,75,110,0.3); }
+        }
+        .valentine-card .title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 0.4rem;
+        }
+        .valentine-card .subtitle {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.5);
+            font-style: italic;
+            margin-bottom: 1.8rem;
+        }
+        .valentine-card .the-question {
+            font-size: 1.7rem;
+            font-weight: 900;
+            line-height: 1.4;
+            margin-bottom: 0.8rem;
+            background: linear-gradient(135deg, #FF6B6B, #FF4B6E, #FFC629);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .valentine-card .tagline {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.55);
+            font-style: italic;
+            margin-bottom: 1.8rem;
+        }
+        .btn-valentine {
+            padding: 18px 54px;
+            background: linear-gradient(135deg, #FF6B6B, #FF4B6E);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            animation: btnPulse 1.8s ease infinite;
+        }
+        @keyframes btnPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 6px 25px rgba(255,75,110,0.35); }
+            50% { transform: scale(1.04); box-shadow: 0 8px 40px rgba(255,75,110,0.55); }
+        }
+        .btn-valentine:active {
+            transform: scale(0.97);
+        }
+
+        /* ---- Celebration ---- */
+        .celebration { text-align: center; }
+        .celebration .big-heart {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: heartBeat 1s ease infinite;
+        }
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.15); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.1); }
+        }
+        .celebration h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-bottom: 1.2rem;
+            background: linear-gradient(135deg, #FF6B6B, #FFC629, #FF4B6E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .celebration p {
+            font-size: 1.05rem;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.8;
+        }
+        .celebration .golden {
+            color: #FFC629;
+            font-weight: 800;
+            -webkit-text-fill-color: #FFC629;
+        }
+
+        /* ---- Floating Hearts (celebration bg) ---- */
+        .hearts-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            overflow: hidden;
+        }
+        .floating-heart {
+            position: absolute;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            8%   { opacity: 0.7; }
+            85%  { opacity: 0.7; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* ---- Progress Dots ---- */
+        .progress-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 1.8rem;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            transition: all 0.4s ease;
+        }
+        .dot.active {
+            background: #FFC629;
+            width: 26px;
+            border-radius: 4px;
+        }
+        .dot.done {
+            background: rgba(255,198,41,0.5);
+        }
+
+        /* ---- Utility ---- */
+        .big-emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        .pulse { animation: pulse 1.8s ease infinite; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+    </style>
+</head>
+<body>
+    <div class="sparkle-bg" id="sparkleBg"></div>
+    <div class="hearts-bg" id="heartsBg"></div>
+
+    <!-- ================= SCREEN 0: BUMBLE NOTIFICATION ================= -->
+    <div class="screen active" id="screen0">
+        <div class="bumble-logo">🐝</div>
+        <div class="notification-badge">
+            <h2>⚠️ Relationship Audit</h2>
+            <p>
+                You swiped right on <span class="highlight">Punu</span> on Bumble.<br><br>
+                That one swipe led to <span class="highlight">2 years of dating</span>.<br><br>
+                As per Bumble's policy, a <span class="highlight">mandatory relationship audit</span> is now required to continue.
+            </p>
+        </div>
+        <button class="btn btn-primary" onclick="goTo(1)">Begin Audit →</button>
+    </div>
+
+    <!-- ================= SCREEN 1: Q1 ================= -->
+    <div class="screen" id="screen1">
+        <div class="quiz-card">
+            <div class="question-number">Question 1 of 5</div>
+            <div class="question-text">How would you rate Punu's looks? 🤔</div>
+            <button class="option-btn" onclick="answer(this, 1, '11/10?? Someone has great taste 😏')">11/10 obviously 🔥</button>
+            <button class="option-btn" onclick="answer(this, 1, 'DIM LIGHTING?! Maxi, that's violation. 😂')">Decent... in dim lighting 🕯️</button>
+            <button class="option-btn" onclick="answer(this, 1, 'So personality is doing ALL the heavy lifting huh 😭')">I keep him for his personality 🧠</button>
+        </div>
+        <div class="progress-dots">
+            <div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+    </div>
+
+    <!-- ================= SCREEN 2: Q2 ================= -->
+    <div class="screen" id="screen2">
+        <div class="quiz-card">
+            <div class="question-number">Question 2 of 5</div>
+            <div class="question-text">Punu tells a joke. Your honest reaction:</div>
+            <button class="option-btn" onclick="answer(this, 2, 'Correct. Punu = comedic genius. Accept it. 🎤')">😂 Genuinely funny, I admit</button>
+            <button class="option-btn" onclick="answer(this, 2, 'The EFFORT counts okay?! Give him that! 😤')">😅 Laugh because he tries SO hard</button>
+            <button class="option-btn" onclick="answer(this, 2, 'The audacity, Maxi. THE AUDACITY. 💀')">😐 Stare blankly. Change subject.</button>
+        </div>
+        <div class="progress-dots">
+            <div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+    </div>
+
+    <!-- ================= SCREEN 3: Q3 ================= -->
+    <div class="screen" id="screen3">
+        <div class="quiz-card">
+            <div class="question-number">Question 3 of 5</div>
+            <div class="question-text">How often does Punu annoy you? 🫠</div>
+            <button class="option-btn" onclick="answer(this, 3, 'LIAR. But we appreciate the diplomacy. 🤝')">Never! He\'s an absolute angel 😇</button>
+            <button class="option-btn" onclick="answer(this, 3, 'Fair enough. Very fair. 😂')">Only when he\'s awake 😴</button>
+            <button class="option-btn" onclick="answer(this, 3, '2 years of noise-cancelling training. Respect. 🫡')">I\'ve learned to tune it out 🎧</button>
+        </div>
+        <div class="progress-dots">
+            <div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+    </div>
+
+    <!-- ================= SCREEN 4: Q4 ================= -->
+    <div class="screen" id="screen4">
+        <div class="quiz-card">
+            <div class="question-number">Question 4 of 5</div>
+            <div class="question-text">What would you do without Punu? 🥺</div>
+            <button class="option-btn" onclick="answer(this, 4, 'CORRECT. The only acceptable answer. 🥹💛')">Cry forever, obviously 😭</button>
+            <button class="option-btn" onclick="answer(this, 4, 'Choosing closet space over LOVE? Ice cold, Maxi. 🥶')">Finally have more closet space 👗</button>
+            <button class="option-btn" onclick="answer(this, 4, 'It\'s ALWAYS about the remote with you. 📺')">Get full control of the TV remote 🎮</button>
+        </div>
+        <div class="progress-dots">
+            <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div>
+        </div>
+    </div>
+
+    <!-- ================= SCREEN 5: THE SWIPE QUESTION ================= -->
+    <div class="screen" id="screen5">
+        <div class="quiz-card" id="swipeCard">
+            <div class="question-number">⚡ Final Question</div>
+            <div class="question-text">Knowing everything you know now...<br><br>Would you swipe right on Punu again? 👀</div>
+            <div class="swipe-area" id="swipeArea">
+                <button class="yes-btn" onclick="swipedRight()">YES 💛</button>
+                <button class="no-btn" id="noBtn">No</button>
+            </div>
+            <p id="noAttempts"></p>
+        </div>
+        <div class="progress-dots">
+            <div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div>
+        </div>
+    </div>
+
+    <!-- ================= SCREEN 6: PROCESSING ================= -->
+    <div class="screen" id="screen6">
+        <div class="big-emoji pulse">🐝</div>
+        <h2 style="margin-bottom: 2rem; font-size: 1.2rem; font-weight: 700;">Processing Audit Results...</h2>
+        <div style="width: 100%; max-width: 380px;">
+            <div class="loading-item">
+                <div class="loading-label">Calculating tolerance levels...</div>
+                <div class="loading-bar-bg"><div class="loading-bar-fill" id="bar1"></div></div>
+                <div class="loading-result" id="result1">TOLERANCE: SUPERHUMAN 💪</div>
+            </div>
+            <div class="loading-item">
+                <div class="loading-label">Measuring love quotient...</div>
+                <div class="loading-bar-bg"><div class="loading-bar-fill" id="bar2"></div></div>
+                <div class="loading-result" id="result2">LOVE LEVEL: OFF THE CHARTS 💕</div>
+            </div>
+            <div class="loading-item">
+                <div class="loading-label">Checking if Punu deserves Maxi...</div>
+                <div class="loading-bar-bg"><div class="loading-bar-fill" id="bar3"></div></div>
+                <div class="loading-result" id="result3">VERDICT: BARELY... BUT YES ✅</div>
+            </div>
+            <div class="loading-item">
+                <div class="loading-label">Generating final recommendation...</div>
+                <div class="loading-bar-bg"><div class="loading-bar-fill" id="bar4"></div></div>
+                <div class="loading-result" id="result4">RECOMMENDATION READY 🔓</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= SCREEN 7: THE VALENTINE'S ASK ================= -->
+    <div class="screen" id="screen7">
+        <div class="valentine-card">
+            <div class="title">Audit Complete ✨</div>
+            <div class="subtitle">Bumble's Official Recommendation:</div>
+            <div class="the-question">
+                Maxi, will you be<br>Punu's Valentine? 💝
+            </div>
+            <div class="tagline">"2 years of tolerating me. Let's make it 200."</div>
+            <button class="btn-valentine" onclick="accepted()">ACCEPT 💖</button>
+        </div>
+    </div>
+
+    <!-- ================= SCREEN 8: CELEBRATION ================= -->
+    <div class="screen" id="screen8">
+        <div class="celebration">
+            <div class="big-heart">💖</div>
+            <h1>She Said YES!</h1>
+            <p>
+                From a random swipe on Bumble<br>
+                to 2 years of beautiful chaos.<br><br>
+                Happy Valentine's Day, Maxi 🥹<br><br>
+                <span class="golden">Here's to us. Always. ❤️</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ---- Ambient sparkles ----
+        (function createSparkles() {
+            const bg = document.getElementById('sparkleBg');
+            for (let i = 0; i < 50; i++) {
+                const s = document.createElement('div');
+                s.className = 'sparkle';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.animationDuration = (2 + Math.random() * 4) + 's';
+                s.style.animationDelay = Math.random() * 4 + 's';
+                bg.appendChild(s);
+            }
+        })();
+
+        // ---- Screen navigation ----
+        let currentScreen = 0;
+
+        function goTo(n) {
+            document.getElementById('screen' + currentScreen).classList.remove('active');
+            document.getElementById('screen' + n).classList.add('active');
+            currentScreen = n;
+            if (n === 6) startLoading();
+        }
+
+        // ---- Quiz answers ----
+        function answer(btn, questionNum, response) {
+            // Highlight selected
+            btn.classList.add('selected');
+            const siblings = btn.parentElement.querySelectorAll('.option-btn');
+            siblings.forEach(b => { b.style.pointerEvents = 'none'; });
+
+            // Show toast
+            const toast = document.createElement('div');
+            toast.className = 'response-toast';
+            toast.textContent = response;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('toast-exit');
+                setTimeout(() => {
+                    toast.remove();
+                    goTo(questionNum + 1);
+                }, 350);
+            }, 1800);
+        }
+
+        // ---- Runaway No button ----
+        let noAttempts = 0;
+        const noMessages = [
+            "Nice try 😂",
+            "The button said NO to your No 🙃",
+            "You really thought?? 💀",
+            "It's giving... desperation to say no 🏃‍♀️",
+            "Maxi, give up. The button won't let you. 😤",
+            "Just click Yes at this point 😭",
+            "I can do this all day 🛡️",
+            "No ❌ is not an option, literally."
+        ];
+
+        const noBtn = document.getElementById('noBtn');
+
+        function moveNoBtn() {
+            const area = document.getElementById('swipeArea');
+            const areaRect = area.getBoundingClientRect();
+            const btnW = noBtn.offsetWidth;
+            const btnH = noBtn.offsetHeight;
+
+            // Random position within the swipe area (and a bit beyond)
+            const rangeX = window.innerWidth * 0.7;
+            const rangeY = window.innerHeight * 0.5;
+
+            const newX = (Math.random() - 0.5) * rangeX;
+            const newY = (Math.random() - 0.5) * rangeY;
+
+            noBtn.style.transform = `translate(${newX}px, ${newY}px)`;
+            noBtn.style.transition = 'transform 0.18s ease-out';
+
+            noAttempts++;
+            if (noAttempts === 3) noBtn.classList.add('shrinking');
+            if (noAttempts === 5) noBtn.classList.add('tiny');
+
+            const msg = noMessages[Math.min(noAttempts - 1, noMessages.length - 1)];
+            document.getElementById('noAttempts').textContent = msg;
+        }
+
+        noBtn.addEventListener('mouseenter', moveNoBtn);
+        noBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            moveNoBtn();
+        }, { passive: false });
+        noBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            moveNoBtn();
+        });
+
+        // ---- Swipe right ----
+        function swipedRight() {
+            goTo(6);
+        }
+
+        // ---- Loading bars ----
+        function startLoading() {
+            const bars = [
+                { bar: 'bar1', result: 'result1', delay: 200 },
+                { bar: 'bar2', result: 'result2', delay: 2000 },
+                { bar: 'bar3', result: 'result3', delay: 3800 },
+                { bar: 'bar4', result: 'result4', delay: 5600 },
+            ];
+
+            bars.forEach(({ bar, result, delay }) => {
+                setTimeout(() => {
+                    document.getElementById(bar).style.width = '100%';
+                    setTimeout(() => {
+                        document.getElementById(result).classList.add('visible');
+                    }, 1400);
+                }, delay);
+            });
+
+            // Go to valentine screen
+            setTimeout(() => goTo(7), 8200);
+        }
+
+        // ---- Accepted! ----
+        function accepted() {
+            goTo(8);
+            startCelebration();
+        }
+
+        function startCelebration() {
+            // Confetti bursts
+            const duration = 6000;
+            const end = Date.now() + duration;
+            (function frame() {
+                confetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.6 },
+                    colors: ['#FF6B6B', '#FFC629', '#FF4B6E', '#ff69b4', '#FFD700']
+                });
+                confetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.6 },
+                    colors: ['#FF6B6B', '#FFC629', '#FF4B6E', '#ff69b4', '#FFD700']
+                });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            })();
+
+            // Big center burst
+            setTimeout(() => {
+                confetti({
+                    particleCount: 100,
+                    spread: 100,
+                    origin: { x: 0.5, y: 0.4 },
+                    colors: ['#FF6B6B', '#FFC629', '#FF4B6E', '#ff69b4', '#FFD700']
+                });
+            }, 500);
+
+            // Floating hearts
+            const container = document.getElementById('heartsBg');
+            const hearts = ['💖', '💕', '💗', '💝', '❤️', '🥰', '✨', '💛'];
+            for (let i = 0; i < 35; i++) {
+                const h = document.createElement('div');
+                h.className = 'floating-heart';
+                h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                h.style.left = Math.random() * 100 + '%';
+                h.style.fontSize = (1.2 + Math.random() * 2) + 'rem';
+                h.style.animationDuration = (6 + Math.random() * 10) + 's';
+                h.style.animationDelay = Math.random() * 4 + 's';
+                container.appendChild(h);
+            }
+        }
+    </script>
+</body>
+</html>
